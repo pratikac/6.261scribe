@@ -1,14 +1,128 @@
-\documentclass[letterpaper, 11pt]{amsart}
+\documentclass[letterpaper, 10pt]{amsart}
 
-\include{./macros.tex}
-\usepackage[margin=1in]{geometry}
+\usepackage{mathpazo}
+\linespread{1.1}
+\include{macros}
+\usepackage[margin=1.25in]{geometry}
 
-\title{Learning distributions over permutations}
+\title{Lecture 12: Learning distributions over permutations}
 \date{May 9, 2014}
 \author{Pratik Chaudhari}
 
 \begin{document}
 \maketitle
+
+In this lecture, we will discuss distributions over permutations and derive bounds for sampling complexity of learning such distributions using optimization techniques from the previous few lectures.
+
+\section{Some background}
+
+The setting is as follows: Given $n$ objects, let $\Sn$ be the space of all its permutations. Note that $\abs{\Sn} = n!$. Let $\m : \Sn \mapsto [0,1]$ be some distribution over the permutations; it has $n!-1$ degrees of freedom. Our question in this class will ``under what conditions can we learn $\m$''. In particular, we would like a sample complexity that scales as $\bigo(poly(n))$. A number of situations where this problem makes sense are:
+\ilist{
+    \item
+    \emph{People's choice}: Given $n$ different products and each data point is a set of products and the product chosen by the individual, we would like to learn the ordering of all the $n$ items. In other words, this model, known as the ``rational view model'' and proposed by Samuelson in 1937, presumes that an individual has a perfect ordering of the $n$ items and picks the item with the highest score from the subset shown to her. This model is however full of contradictions because choices of individuals vary based on the current setting, e.g., we may prefer Mexican food over Italian food someday and vice-versa.
+    %
+    \item
+    \emph{Discrete choice models}: In this setting, an individual's choice is a distribution over permutations and these choices are reveled through preferences such as ``picking item A over item B''. For example, this is a good model for a sports tournament where team A defeats team B, C defeats D, etc. and we would like to understand the ordering between the teams.
+    \ilist{
+        \item
+        ``Ranked elections'', which are popular in the Commonwealth countries provide another example. In this election, voters, instead of voting for a particular candidiate, provide a list of preferences. Assume every voter $v$ provides an ordering of $n$ candiates, i.e, $\s_v \in \Sn$, so given $\s_1,
+        \ldots, \s_m \in \Sn$, find $\s^* \sim \mu$.
+        \item
+        Imagine if there are only 2 candidates, we can easily find the overall winner of this election as the one who has most votes for position 1. This motivates a simple algorithm to decide between $n$ candidiates --- at each iteration remove the least voted candiate at position 1 and decide the winner after $n-1$ such iterations. This algorithm however does not work if the electorate is highly polarized and there is a candidate who has 100\% votes for the second position.
+        \pc{Diaconis '89}{}
+    }
+}
+
+\pc{lots of discussion on ``Arrows impossibility theorem''}{}
+
+\section{Multinomial Logit Model}
+
+The above discussion helps to concretize the problem formulation.
+
+\begin{problem}
+Given $\mu: \Sn \mapsto [0,1]$, iid samples from $\mu$, say $\s_t$ are drawn as follows: at time $t$, sample $\s_t \in \Sn$ according to $\mu$. We however only get to observe the ordering between two items $i_t, j_t$ that are chosen randomly from $n$ items, i.e., pick a pair $i, j$ from $\listn = \{1, 2, \ldots, n\}$ and output $i_t > j_t$ or $i_t < j_t$ depending upon their index in $\s_t$. Our objective is to ``learn $\mu$'' from this data.
+\end{problem}
+
+The pairs $i, j$ can be chosen a priori or can be desgined using some scheme. Note that data size is $\bigo(n^2)$ and hence learning $\mu$ directly is not possible (since $\mu$ has $n!-1$ parameters), we need to simplify $\mu$ in some way, which we do as follows.
+
+\subsection{Multinomial Logit Model [Thurstone 1927]}
+
+Each item $i$ has a score
+$$S_i = u_i + Z_i$$
+associated with it where $u_i$ is a deterministic factor, e.g., its inherent ``goodness'' and $Z_i$ is noise, e.g., a team's performance on a given day. $Z_i$ is assumed to independent from everything else, e.g., $Z_i \sim N(0, \rho_i)$ where $\rho_i$ is some parameter based on $i$. The descending order of $S_i$s provides a permutation of $\listn$. \href{http://www.2700chess.com}{Elo} (FIDE's rating for chess players) is a system which uses this model. Another example is Microsoft's online rating system which uses the $Z_i \sim N(0, \rho_i)$ model.
+
+We will use a different distribution for $Z_i$ here known as the Gumbel distribution. Thus
+$$Z_i \sim \gumbel(0,1)$$
+where the density of the Gumbel distribution is given by $f(x) = \exp(-x -\exp(-x))$. Note that we are assuming $Z_i$s to be homogeneous, i.e., $S_i \geq S_j$ iff $u_i \geq u_j$. $u_i$s are the parameters that we would like to learn from $\bigo(n \log n)$ samples of the form $i > j$ or not. Note that this model induces an inherently $O(n^2)$ distribution.
+
+\begin{remark}
+In the large sample limit, getting the right ordering is easy if
+\end{remark}
+
+\subsubsection{Motivation for Gumbel distribution}
+Let us first note a neat fact of this distribution.
+\begin{lemma}
+\label{lem:gumbel_mgf}
+Difference of two Gumbel random variables is a Logistic random variable, i.e.,
+$$
+X, Y \sim \gumbel(0,1) \implies W = X-Y \sim \logistic(0,1).
+$$
+In other words,
+$$
+\P(W < w) = \f{1}{1+e^{-w}}.
+$$
+\end{lemma}
+\begin{proof}
+We use moment generating functions to prove this. Note that
+\aeqs{
+    \E[\exp(\th W)] &= \E[\exp(\th X)\ \exp(-\th Y)] \\
+    &= \E[\exp(\th X)] \E[\exp(-\th Y)] \\
+    \implies M_W(\th) &= M_X(\th) M_Y(-\th).
+}
+where $M_W(\th)$ is the moment generating function of $W$. It is known that
+$$
+\E[M_X(\th)] = \Gamma(1-\th) \exp(\th).
+$$
+where $\Gamma(n) = (n-1)!$ if $n$ is an integer.
+Thus,
+\aeqs{
+    \E[\exp(\th W)] &= \Gamma(1-\th) \exp(\th) \Gamma(1+\th) \exp(-\th) \\
+    &= \Gamma(1-\th) \Gamma(1+\th) \\
+    &= \f{\Gamma(1-\th) \Gamma(1+\th)}{\Gamma(2)}\\
+    &= \trm{Beta}(1-\th, 1+\th).
+}
+where $\trm{Beta}(x,y) = \f{\Gamma(x) \Gamma(y)}{\Gamma(x+y)}$ is the Beta distribution which is also the MGF of $\logistic(0,1)$!
+\end{proof}
+
+Using Lem.~\ref{lem:gumbel_mgf}, we can see that
+\aeqs{
+    \P(S_i > S_j) &= \P(u_i + Z_i > u_j + Z_j) \\
+    &= \P(Z_i - Z_j > u_j - u_i)\\
+    &= \f{1}{1 + \exp(u_i - u_j)}\\
+    \implies \P(i > j) &= \f{\exp(u_i - u_j)}{1 + \exp(u_i - u_j)} = \f{e^{u_i}}{e^{u_i} + e^{u_j}}.
+}
+The probability of $i$ being chosen over $j$ is thus proportional to exponentiated intrinsic skill of $i$. In a sense, the Gumbel distribution we used above is retro-fitted to achive this, which is what was prevalent in literature.
+
+However, quite surprisingly, Loose(?) proved in 1946 that this form for $\P(i > j)$ is the only distribution where we have ``irrelevance of external choices'', e.g., given two options for desert, a chocolate cake and coffee, if one chooses coffee, upon being presented a third option, say mint-tea, the individual does not change her choice to chocolate cake. Note that this is not true for the example of elections, if people prefer the marginal risk of choosing candidate A over B, upon being presented a third option C, the eletorate might be so polarized that they will conservatively vote for B to avoid C winning at any cost.
+
+Let us note the simulation procedure for the Gumbel distribution. Let $w_i = e^{u_i}$. We need to generate $\s$ s.t. $\P(i > j) = \f{w_i}{w_i + w_j}$.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
