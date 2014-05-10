@@ -1,4 +1,4 @@
-\documentclass[letterpaper, 10pt]{amsart}
+\documentclass[letterpaper, 12pt, reqno]{amsart}
 
 \usepackage{mathpazo}
 \linespread{1.1}
@@ -16,7 +16,7 @@ In this lecture, we will discuss distributions over permutations and derive boun
 
 \section{Some background}
 
-The setting is as follows: Given $n$ objects, let $\Sn$ be the space of all its permutations. Note that $\abs{\Sn} = n!$. Let $\m : \Sn \mapsto [0,1]$ be some distribution over the permutations; it has $n!-1$ degrees of freedom. Our question in this class will ``under what conditions can we learn $\m$''. In particular, we would like a sample complexity that scales as $\bigo(poly(n))$. A number of situations where this problem makes sense are:
+Given $n$ objects, let $\Sn$ be the space of all its permutations. Note that $\abs{\Sn} = n!$. Let $\m : \Sn \mapsto [0,1]$ be some distribution over the permutations; it has $n!-1$ degrees of freedom. Our question in this class will ``under what conditions can we learn $\m$''. In particular, we would like a sample complexity that scales as $\bigo(poly(n))$. A number of situations where this problem makes sense are:
 \ilist{
     \item
     \emph{People's choice}: Given $n$ different products and each data point is a set of products and the product chosen by the individual, we would like to learn the ordering of all the $n$ items. In other words, this model, known as the ``rational view model'' and proposed by Samuelson in 1937, presumes that an individual has a perfect ordering of the $n$ items and picks the item with the highest score from the subset shown to her. This model is however full of contradictions because choices of individuals vary based on the current setting, e.g., we may prefer Mexican food over Italian food someday and vice-versa.
@@ -28,19 +28,28 @@ The setting is as follows: Given $n$ objects, let $\Sn$ be the space of all its 
         ``Ranked elections'', which are popular in the Commonwealth countries provide another example. In this election, voters, instead of voting for a particular candidiate, provide a list of preferences. Assume every voter $v$ provides an ordering of $n$ candiates, i.e, $\s_v \in \Sn$, so given $\s_1,
         \ldots, \s_m \in \Sn$, find $\s^* \sim \mu$.
         \item
-        Imagine if there are only 2 candidates, we can easily find the overall winner of this election as the one who has most votes for position 1. This motivates a simple algorithm to decide between $n$ candidiates --- at each iteration remove the least voted candiate at position 1 and decide the winner after $n-1$ such iterations. This algorithm however does not work if the electorate is highly polarized and there is a candidate who has 100\% votes for the second position.
+        Imagine if there are only 2 candidates, we can easily find the overall winner of this election as the one who has most votes for position 1. This motivates a simple algorithm to decide between $n$ candidiates --- at each iteration remove the least voted candiate at position 1 and decide the winner after $n-1$ such iterations. It is easy to see that this algorithm however does not work if the electorate is highly polarized and there is a candidate who has 100\% votes for the second position.
         \pc{Diaconis '89}{}
     }
 }
 
-\pc{lots of discussion on ``Arrows impossibility theorem''}{}
+\subsection{Arrow's impossibility theorem}
+Consider the following criteria, they seem like a good set of conditions that we would like to impose upon an algorithm that decides the ``best winner'' using partial preferences.
+\ilist{
+    \item \emph{fairness}: the algorithm weights all votes equally
+    \item \emph{sanity check}: if a certain learnt distribution $\hat{\mu}$ is such that its corresponding $\s^*(\hat{\mu})$ assigns $i > j$ for some $i$ and $j$, if we revert a few negative data-points, i.e., ones with $j > i$ to positive, i.e., $i > j$, and get a new $\hat{\mu}'$ then the new $\s^*(\hat{\mu}')$ still has $i > j$. %Note that reflexivity, i.e., if $\s^*(\hat{\mu})$ dictates $i > j$ and $j > k$ then it also dictates $i > k$, holds trivially.
+}
+
+Arrow's impossibility theorem~\cite{arrow2012social} states that with three or more candidates, no ranked ordering system can convert the ranked preferences of the voters into a community-wide ranking while also maintaining the above criteria. Put other way, the above conditions lead to a dictatorial election procedure, i.e., one which prefers a certain candidate over others irrespective of the data.
+
+See the article \href{http://tech.mit.edu/V123/N8/8voting.8n.html}{Arrow's Theorem Proves No Voting System is Perfect} for a nice discussion.
 
 \section{Multinomial Logit Model}
 
 The above discussion helps to concretize the problem formulation.
 
 \begin{problem}
-Given $\mu: \Sn \mapsto [0,1]$, iid samples from $\mu$, say $\s_t$ are drawn as follows: at time $t$, sample $\s_t \in \Sn$ according to $\mu$. We however only get to observe the ordering between two items $i_t, j_t$ that are chosen randomly from $n$ items, i.e., pick a pair $i, j$ from $\listn = \{1, 2, \ldots, n\}$ and output $i_t > j_t$ or $i_t < j_t$ depending upon their index in $\s_t$. Our objective is to ``learn $\mu$'' from this data.
+Given $\mu: \Sn \mapsto [0,1]$, iid samples from $\mu$, say $\s_t$ are drawn as follows: at time $t$, sample $\s_t \in \Sn$ according to $\mu$. We however only get to observe the ordering between two items $i_t, j_t$ that are chosen randomly from $n$ items, i.e., pick a pair $i, j$ from the ordered set $\listn = \{1, 2, \ldots, n\}$ and output $i_t > j_t$ or $i_t < j_t$ depending upon their index in $\s_t$. Our objective is to ``learn $\mu$'' from this data.
 \end{problem}
 
 The pairs $i, j$ can be chosen a priori or can be desgined using some scheme. Note that data size is $\bigo(n^2)$ and hence learning $\mu$ directly is not possible (since $\mu$ has $n!-1$ parameters), we need to simplify $\mu$ in some way, which we do as follows.
@@ -49,7 +58,7 @@ The pairs $i, j$ can be chosen a priori or can be desgined using some scheme. No
 
 Each item $i$ has a score
 $$S_i = u_i + Z_i$$
-associated with it where $u_i$ is a deterministic factor, e.g., its inherent ``goodness'' and $Z_i$ is noise, e.g., a team's performance on a given day. $Z_i$ is assumed to independent from everything else, e.g., $Z_i \sim N(0, \rho_i)$ where $\rho_i$ is some parameter based on $i$. The descending order of $S_i$s provides a permutation of $\listn$. \href{http://www.2700chess.com}{Elo} (FIDE's rating for chess players) is a system which uses this model. Another example is Microsoft's online rating system which uses the $Z_i \sim N(0, \rho_i)$ model.
+associated with it where $u_i$ is a deterministic factor, e.g., its inherent ``goodness'' and $Z_i$ is noise, e.g., a team's performance on a given day. $Z_i$ is assumed to independent from everything else, e.g., $Z_i \sim N(0, \rho_i)$ where $\rho_i$ is some parameter based on $i$. The descending order of $S_i$s provides a permutation of $\listn$. \href{http://www.2700chess.com}{Elo} (FIDE's rating system for chess players) uses this model. Another example is Microsoft's TrueSkill gaming engine which uses the $Z_i \sim N(0, \rho_i)$ model.
 
 We will use a different distribution for $Z_i$ here known as the Gumbel distribution. Thus
 $$Z_i \sim \gumbel(0,1)$$
@@ -59,7 +68,7 @@ where the density of the Gumbel distribution is given by $f(x) = \exp(-x -\exp(-
 In the large sample limit, getting the right ordering is easy if
 \end{remark}
 
-\subsubsection{Motivation for Gumbel distribution}
+\subsection{Motivation for Gumbel distribution}
 Let us first note a neat fact of this distribution.
 \begin{lemma}
 \label{lem:gumbel_mgf}
@@ -103,27 +112,89 @@ Using Lem.~\ref{lem:gumbel_mgf}, we can see that
 }
 The probability of $i$ being chosen over $j$ is thus proportional to exponentiated intrinsic skill of $i$. In a sense, the Gumbel distribution we used above is retro-fitted to achive this, which is what was prevalent in literature.
 
-However, quite surprisingly, Loose(?) proved in 1946 that this form for $\P(i > j)$ is the only distribution where we have ``irrelevance of external choices'', e.g., given two options for desert, a chocolate cake and coffee, if one chooses coffee, upon being presented a third option, say mint-tea, the individual does not change her choice to chocolate cake. Note that this is not true for the example of elections, if people prefer the marginal risk of choosing candidate A over B, upon being presented a third option C, the eletorate might be so polarized that they will conservatively vote for B to avoid C winning at any cost.
+However, quite surprisingly,~\cite{luce2012individual} proved in 1946 that this form for $\P(i > j)$ is the only distribution where we have ``irrelevance of external choices'', e.g., given two options for desert, a chocolate cake and coffee, if one chooses coffee, upon being presented a third option, say mint-tea, the individual does not change her choice to chocolate cake. Note that this is not true for the example of elections, if people prefer the marginal risk of choosing candidate A over B, upon being presented a third option C, the electorate might be so polarized that they will conservatively vote for B to avoid C winning at any cost.
 
-Let us note the simulation procedure for the Gumbel distribution. Let $w_i = e^{u_i}$. We need to generate $\s$ s.t. $\P(i > j) = \f{w_i}{w_i + w_j}$.
+Let us give a simulation procedure for the Gumbel distribution. Let $w_i = e^{u_i}$. We need to generate $\s$ s.t. $\P(i > j) = \f{w_i}{w_i + w_j}$. Start filling up an array of length $n$ where
+$$
+\P(i \trm{ is picked for current position} ) = \f{w_i}{\sum_k w_k}.
+$$
+To see that this scheme indeed produces the desired distribution, we use a stopping time argument. Let $\tau$ be the first time when either item $i$ or $j$ is selected. Observe that conditional upon either $i$ or $j$ being picked, the probability of $i$ being picked, i.e., probability of $i$ being chosen over $j$ is simply,
+\aeqs{
+\P( i > j) = \f{w_i/\sum_k w_k}{w_i/\sum_k w_k + w_j/\sum_k w_k} = \f{w_i}{w_i + w_j}.
+}
+
+\section{Formal setup}
+
+Our formal setup is as follows.
+\begin{problem}
+\label{prob:formal}
+Given $m$ observations $(i_k, j_k)$ where $i_k > j_k$, i.e., item $i_k$ is picked over $j_k$, reconstruct the exponentiated ``skill'' parameters $w_1, \ldots, w_n$.
+\end{problem}
+To solve this problem, we shall maximize the likelihood function. Consider,
+\aeqs{
+    \P((i_1, j_1), \ldots, (i_m, j_m)) &= \prod_{k=1}^m \P((i_k, j_k)) \\
+    &= \prod_{k=1}^m \f{w_{i_k}}{w_{i_k} + w_{j_k}} \\
+    &= \prod_{k=1}^m \f{\exp(u_{i_k} - u_{j_k})}{1+\exp(u_{i_k} - u_{j_k})}.
+}
+Let $x_k \in \{ 0,1\}^n$ be a vector where $x_k(i_k) = 1$, $x_k(j_k) = -1$ and all the others are zeros. $x_k$ thus has a +1 at the $i_k^{th}$ element and a -1 at the $j_k^{th}$ element if $i_k > j_k$. If we let $u = [u_1, \ldots, u_n]'$ we can see that
+$$
+u' x_k = u_{i_k} - u_{j_k}.
+$$
+Simplify the above equation to get
+\aeqs{
+    \P((i_1, j_1), \ldots, (i_m, j_m)) &= \prod_{k=1}^m \f{\exp(u' x_k)}{1 + \exp(u'x_k)}.
+}
+If we let $-L(u) = \log \P(u; x_1, \ldots, x_m)$ be the log-likelihood function, we have
+$$
+-L(u) = \sum_{k=1}^m \sqbrac{u' x_k - \log(1+\exp(u'x_k))}.
+$$
+The ML estimate of $u$ is then the solution of the following problem
+\beq{
+    \min_{u \in \reals^n, \sum u_i = 0}\ -\sum_{k=1}^m \sqbrac{u' x_k - \log(1+\exp(u'x_k))}.
+}
+\begin{remark}
+Let us assume that we know some bound $b$ s.t. $\norm{u}_\infty \leq b$. Also, note that since $L(u)$ only depends upon terms of the form $u_{i_k} - u_{j_k}$, it is invariant to shifting, so we can set $\sum u_i = 0$ as another constraint in the problem.
+
+Let us note that Prob.~\ref{prob:formal} is a convex optimization with nice constraints and hence can be solved efficiently.
+\end{remark}
+
+\subsection{Sample complexity of learning}
+The analysis in this section follows the arguments in~\cite{negahban2012restricted}. Let $\hu$ be the solution of Prob.~\ref{prob:formal} and $u^*$ be the actual model. By definition, we have
+\aeqs{
+L(\hu) &\leq L(u^*) \\
+\implies L(\hu) - L(u^*) - \nabla L(u^*)' \D &\leq -\nabla L(u^*)' \D
+}
+where $\D = \hu - u^*$. The idea is to then bound
+$$
+\norm{\nabla L(u^*)} \leq \alpha
+$$
+for some $\alpha$ and get
+$$
+L(\hu) - L(u^*) - \nabla L(u^*)' \D \leq \norm{\nabla L(u^*)}_2\ \norm{\D}_2.
+$$
+But note that
+$$
+L(\hu) - L(u^*) - \nabla L(u^*)' \D \geq \f{1}{2} \D' \nabla^2 L(u^* + \lambda \D)\ \D
+$$
+where $\lambda \in [0,1]$ and thus $u^* + \lambda \D$ lies on the line joining $u^*$ and $\hu$. (This is an application of the mean value theorem).
+If we can find some $\beta$ such that
+$$
+\f{1}{2} \nabla^2 L(u^* + \lambda \D) \geq \beta,
+$$
+we will have
+\aeqs{
+\beta \norm{\D}_2^2 \leq L(\hu) - L(u^*) - &\nabla L(u^*)' \D \leq \alpha \norm{\D}_2 \\
+\trm{which}\ \implies \norm{\D}_2 \leq \f{\alpha}{\beta}
+}
+and we thus get a bound on $\norm{\hu - u^*}$.
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+{
+\small
+\linespread{1.5}
+\bibliography{lec12}
+\bibliographystyle{apa}
+}
 
 \end{document}
