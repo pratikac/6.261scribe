@@ -65,17 +65,17 @@ $$Z_i \sim \gumbel(0,1)$$
 where the density of the Gumbel distribution is given by $f(x) = \exp(-x -\exp(-x))$. Note that we are assuming $Z_i$s to be homogeneous, i.e., $S_i \geq S_j$ iff $u_i \geq u_j$. $u_i$s are the parameters that we would like to learn from $\bigo(n \log n)$ samples of the form $i > j$ or not. Note that this model induces an inherently $O(n^2)$ distribution.
 
 \begin{remark}
-If $(u_i - u_j$ is large, we can see that this model performs well. Note
+If $(u_i - u_j)$ is large, we can see that this model performs well. Note that
 \aeqs{
     \P(S_i > S_j) &= \P(Z_i - Z_j > u_j - u_i)\\
     &= P(N(0,2 \rho^2) > u_j - u_i) \quad \trm{if}\ Z_i \sim N(0, \rho^2) \\
-    &= 1 - \Phi(\f{u_j -u_i}{\sqrt{2}\rho})
+    &= 1 - \Phi\rbrac{\f{u_j -u_i}{\sqrt{2}\rho}}
 }
 where $\Phi(x) = \P(N(0,1) \leq x)$ is the CDF of a Gaussian. If $u_i >> u_j$, we have
 $$
 \log \P(S_i > S_j)\ \approx\ \f{(u_i -u_j)^2}{4 \rho^2} - \f{1}{2} \log 4 \pi \rho^2.
 $$
-Thus, $S_i > S_j$ is very likely.
+Thus $S_i > S_j$ is very likely.
 \end{remark}
 
 \subsection{Motivation for Gumbel distribution}
@@ -214,12 +214,12 @@ Finally,
 \aeqs{
     \D' \nabla^2 L(z) \D = \sum_{k} \sum_{i,j} \f{\D_i \D_j x_{ki} x_{kj} \exp(z' x_k)}{(1+\exp(z' x_k))^2}.
 }
-Now note that $z = u^* + \l \D$ and we have assumed $\norm{u^*}_\infty \leq b$ and of course $\norm{\D}_\infty \leq b$ (since $\D = \hu - u^*$). Thus
+Now note that $z = u^* + \l \D$ and we have assumed $\norm{u^*}_\infty \leq b$ and \pc{$\norm{\D}_\infty \leq 2b$ (since $\D = \hu - u^*$).}{the notes say that this is $b$, it should be $2b$ instead?} Thus
 \aeqs{
-\norm{z}_\infty &\leq 2 b \qquad \l \in [0,1] \\
-&= \abs{z' x_k} \leq 2b.
+\norm{z}_\infty &\leq 3 b \qquad \trm{since}\ \l \in [0,1] \\
+\implies \abs{z' x_k} &\leq 3b.
 }
-Let $\tilde{b} = \exp(2b)$ and see that
+Let $\tilde{b} = \exp(3b)$ and see that
 \aeqs{
     \D' \nabla^2 L(z) \D &\geq \f{\tilde{b}}{(1+\tilde{b})^2} \sum_k \sqbrac{\sum_{i,j}\ \D_i \D_j x_{ki} x_{kj}} \\
     & = \f{\tilde{b}}{(1+\tilde{b})^2}\ \sqbrac{\sum_k (\D' x_k)^2}.
