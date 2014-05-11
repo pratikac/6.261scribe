@@ -1,4 +1,4 @@
-\documentclass[letterpaper, 12pt, reqno]{amsart}
+\documentclass[letterpaper, 11pt, reqno]{amsart}
 
 \usepackage{mathpazo}
 \linespread{1.1}
@@ -29,7 +29,7 @@ Given $n$ objects, let $\Sn$ be the space of all its permutations. Note that $\a
         \ldots, \s_m \in \Sn$, find $\s^* \sim \mu$.
         \item
         Imagine if there are only 2 candidates, we can easily find the overall winner of this election as the one who has most votes for position 1. This motivates a simple algorithm to decide between $n$ candidiates --- at each iteration remove the least voted candiate at position 1 and decide the winner after $n-1$ such iterations. It is easy to see that this algorithm however does not work if the electorate is highly polarized and there is a candidate who has 100\% votes for the second position.
-        \pc{Diaconis '89}{}
+        \item See~\cite{diaconis1989generalization} for an empirical analysis using spectral methods for ranked data from elections.
     }
 }
 
@@ -65,7 +65,17 @@ $$Z_i \sim \gumbel(0,1)$$
 where the density of the Gumbel distribution is given by $f(x) = \exp(-x -\exp(-x))$. Note that we are assuming $Z_i$s to be homogeneous, i.e., $S_i \geq S_j$ iff $u_i \geq u_j$. $u_i$s are the parameters that we would like to learn from $\bigo(n \log n)$ samples of the form $i > j$ or not. Note that this model induces an inherently $O(n^2)$ distribution.
 
 \begin{remark}
-In the large sample limit, getting the right ordering is easy if
+If $(u_i - u_j$ is large, we can see that this model performs well. Note
+\aeqs{
+    \P(S_i > S_j) &= \P(Z_i - Z_j > u_j - u_i)\\
+    &= P(N(0,2 \rho^2) > u_j - u_i) \quad \trm{if}\ Z_i \sim N(0, \rho^2) \\
+    &= 1 - \Phi(\f{u_j -u_i}{\sqrt{2}\rho})
+}
+where $\Phi(x) = \P(N(0,1) \leq x)$ is the CDF of a Gaussian. If $u_i >> u_j$, we have
+$$
+\log \P(S_i > S_j)\ \approx\ \f{(u_i -u_j)^2}{4 \rho^2} - \f{1}{2} \log 4 \pi \rho^2.
+$$
+Thus, $S_i > S_j$ is very likely.
 \end{remark}
 
 \subsection{Motivation for Gumbel distribution}
@@ -82,7 +92,7 @@ $$
 $$
 \end{lemma}
 \begin{proof}
-We use moment generating functions to prove this. Note that
+This fact can be proved using convolution, which is messy. We shall use moment generating functions to prove it instead. Note that
 \aeqs{
     \E[\exp(\th W)] &= \E[\exp(\th X)\ \exp(-\th Y)] \\
     &= \E[\exp(\th X)] \E[\exp(-\th Y)] \\
@@ -151,6 +161,7 @@ $$
 The ML estimate of $u$ is then the solution of the following problem
 \beq{
     \min_{u \in \reals^n, \sum u_i = 0}\ -\sum_{k=1}^m \sqbrac{u' x_k - \log(1+\exp(u'x_k))}.
+    \label{eqn:ML_probem}
 }
 \begin{remark}
 Let us assume that we know some bound $b$ s.t. $\norm{u}_\infty \leq b$. Also, note that since $L(u)$ only depends upon terms of the form $u_{i_k} - u_{j_k}$, it is invariant to shifting, so we can set $\sum u_i = 0$ as another constraint in the problem.
@@ -159,7 +170,9 @@ Let us note that Prob.~\ref{prob:formal} is a convex optimization with nice cons
 \end{remark}
 
 \subsection{Sample complexity of learning}
-The analysis in this section follows the arguments in~\cite{negahban2012restricted}. Let $\hu$ be the solution of Prob.~\ref{prob:formal} and $u^*$ be the actual model. By definition, we have
+\nocite{negahban2012restricted}
+%The analysis in this section follows the arguments in~\cite{negahban2012restricted}.
+Let $\hu$ be the solution of Prob.~\ref{prob:formal} and $u^*$ be the actual model. By definition, we have
 \aeqs{
 L(\hu) &\leq L(u^*) \\
 \implies L(\hu) - L(u^*) - \nabla L(u^*)' \D &\leq -\nabla L(u^*)' \D
@@ -188,10 +201,54 @@ we will have
 }
 and we thus get a bound on $\norm{\hu - u^*}$.
 
+\subsubsection{Getting $\a$ and $\b$}
+Let us first compute $\b$. Note that since $L(\cdot)$ is a sum, we can consider each individual term separately. Also $u' x_k$ terms in Eqn.~\eqref{eqn:ML_probem} vanish while taking the Hessian. Thus if $z = u^* + \l \D$ as we used in the previous section, we have
+\aeqs{
+    \nabla^2 L(z) &= \f{\partial^2}{\partial z_i\ \partial z_j}\ \log(1 + \exp(z' x_k)) \\
+    &= \f{\partial}{\partial z_j}\ \sum_{k=1}^m \f{1}{1+\exp(z' x_k)} \exp(z' x_k)\ x_{ki} \\
+    &= \sum_{k=1}^m x_{ki}\ \cbrac{\f{\exp(z'x_k) x_{kj}}{1+\exp(z' x_k)} - \f{\exp(z' x_k)^2 x_{kj}}{(1+\exp(z' x_k))^2}} \\
+    &= \sum_{k=1}^m \f{x_{ki} x_{kj}\ \exp(z' x_k)}{1+\exp(z' x_k)} \sqbrac{1 - \f{\exp(z' x_k)}{1+\exp(z' x_k)}} \\
+    &= \sum_{k=1}^m \f{x_{ki} x_{kj}\ \exp(z' x_k)}{(1+\exp(z' x_k))^2}.
+}
+Finally,
+\aeqs{
+    \D' \nabla^2 L(z) \D = \sum_{k} \sum_{i,j} \f{\D_i \D_j x_{ki} x_{kj} \exp(z' x_k)}{(1+\exp(z' x_k))^2}.
+}
+Now note that $z = u^* + \l \D$ and we have assumed $\norm{u^*}_\infty \leq b$ and of course $\norm{\D}_\infty \leq b$ (since $\D = \hu - u^*$). Thus
+\aeqs{
+\norm{z}_\infty &\leq 2 b \qquad \l \in [0,1] \\
+&= \abs{z' x_k} \leq 2b.
+}
+Let $\tilde{b} = \exp(2b)$ and see that
+\aeqs{
+    \D' \nabla^2 L(z) \D &\geq \f{\tilde{b}}{(1+\tilde{b})^2} \sum_k \sqbrac{\sum_{i,j}\ \D_i \D_j x_{ki} x_{kj}} \\
+    & = \f{\tilde{b}}{(1+\tilde{b})^2}\ \sqbrac{\sum_k (\D' x_k)^2}.
+}
+It can now be shown using matrix concentration inequalities that
+\begin{claim}
+For iid samples and $m > 12\ n \log n$, w.h.p.
+$$
+\f{1}{m} \sum_{k=1}^m \rbrac{\D' x_k}^2 \geq \f{1}{3n} \norm{\D}^2_2.
+$$
+\end{claim}
+\begin{claim}
+$$\norm{\nabla L(u^*)}_2 \leq 2 \sqrt{\f{\log n}{m}} = \a.$$
+\end{claim}
+Using the above two claims, we finally have
+$$
+\norm{\D}_2 \leq \f{\tilde{b}}{(1+\tilde{b})^2}\ \sqrt{\f{n^2 \log n}{m}}.
+$$
+\begin{remark}
+Note that the $\tilde{b}$ terms in the above bound should not really be there, i.e., the error of our algorithm should not depend upon how well separated different candidates are in terms of their skills. Arguably, larger the value of $b$, the easier it is to discover the winner.
 
+\pc{write about the intuition Devavrat gave about the $\f{n^2 \log }{m}$ term here.}{}
+\end{remark}
+
+
+\section{Rank Centrality}
+The material in this section follows~\cite{rank_centrality}.
 
 {
-\small
 \linespread{1.5}
 \bibliography{lec12}
 \bibliographystyle{apa}
