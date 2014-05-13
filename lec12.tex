@@ -7,7 +7,7 @@
 
 \title{Lecture 12: Learning distributions over permutations}
 \date{May 9, 2014}
-\author{Pratik Chaudhari}
+\author{Pratik Chaudhari and Yongwhan Lim}
 
 \begin{document}
 \maketitle
@@ -244,9 +244,142 @@ Note that the $\tilde{b}$ terms in the above bound should not really be there, i
 \pc{write about the intuition Devavrat gave about the $\f{n^2 \log }{m}$ term here.}{}
 \end{remark}
 
-
 \section{Rank Centrality}
-The material in this section follows~\cite{rank_centrality}.
+	We set up the problem as:
+		\begin{center}
+			$\displaystyle p = [p_{ij}] = \begin{cases} \frac{\# j > i}{\# i>j + \# j>i} \cdot \frac{1}{d_{max}} \mbox{ if } (i, j) \mbox{ are compared} \\ 0 \mbox { o.w. }\end{cases}$.
+		\end{center}
+	
+	Correspondingly, we may write:
+		\begin{center}
+			$\displaystyle p^*= [p_{ij}^*] = \begin{cases} \frac{w_j}{w_i + w_j} \cdot \frac{1}{d_{max}} \mbox{ if } (i, j) \mbox{ are compared} \\ 0 \mbox { o.w. }\end{cases}$.
+		\end{center}
+
+	and estimate $p$ as $p^* + \Delta$, where $\Delta$ is a stochastic error. First of all, we have:
+		\begin{center}
+			$\pi^* = [\pi_i^*]$ where $\pi^* T p^* = {\pi^*}^T$
+		\end{center}
+	from which, it is immediate that:
+		\begin{center}
+			$\pi_i^* = \sum_j \pi_j^* p_{ji}^*$.
+		\end{center}
+	
+	We have the following upshot:
+		\begin{claim} $\pi_i^* \propto w_i$ if the comparison graph is connected.
+			\begin{proof}
+				$\displaystyle \pi_i^* = \frac{w_i}{\sum w_i}$ is the stationary distribution.
+			\end{proof}
+		\end{claim}
+	
+	Write $\pi_{t+1}^T = \pi_t^T p$. We'd like to estimate the error. First, we may write:
+		\begin{center}
+			$\pi_t^T = \pi_{t-1}^T p = \pi_{t-1}^T (p^* + \Delta) = \pi_{t-1}^T p^* + \pi_{t-1}^T \Delta$.
+		\end{center}
+
+	Hence, using the fact that ${\pi^*}^T p = {\pi^*}^T$, we have:
+		\begin{eqnarray*}
+			\pi_t^T - {\pi^*}^T &=& \pi_{t-1}^T p^* + \pi_{t-1}^T \Delta - {\pi^*}^T \\
+			&=& (\pi_{t-1} - \pi^*)^T p^* + (\pi_{t-1}^* - \pi^*)^T \Delta + {\pi^*}^T \Delta \\
+			&=& (\pi_{t-1} - \pi^*)^T(p^* + \Delta) + {\pi^*}^T \Delta
+		\end{eqnarray*}
+	
+	Now, define $p_0^* = {\pi^*}^{-1/2} S_0 {\pi^*}^{1/2}$ where $S_0 = \lambda_1 u_1 u_1^T$ where $u_1$ is an eigenvalue of $S = {\pi^*}^{1/2} p^* {\pi^*}^{-1/2}$. Note that, then, the eigenvalue of $p^*$ is given by ${\pi^*}^{1/2} u_i$ where $u_i = [{\pi_i^*}^{1/2}]$. Of course, $\lambda_i$ are eigenvalue.
+	
+	Then, we find:
+		\begin{center}
+			$(\pi_{t-1} - \pi^*)^T p_0^* = (\pi_{t-1} - \pi^*)^T {\pi^*}^{-1/2} u_1 \lambda_1 u_1^t {\pi^*}^{1/2} = (\pi_{t-1} - \pi^*)^T {\bf 1} = 0$.
+		\end{center}
+		
+	Therefore,
+		\begin{center}
+			$(\pi_t - \pi^*)^T = (\pi_{t-1} - \pi^*)^T [(p^* - p_0^*) + \Delta] + {\pi^*}^T \Delta$.
+		\end{center}
+	
+	From which, we deduce:
+		\begin{eqnarray*}
+			\vert\vert (\pi_t - \pi^*) \vert\vert_{\pi^*} &\leq& \vert\vert (\pi_t - \pi^*) \vert\vert_{\pi^*} [\vert\vert p^* - p_0^* \vert\vert_{\pi^*} + \vert\vert \Delta \vert\vert_{\pi^*}] + \vert\vert {\pi^*}^T \Delta \vert\vert_{\pi^*} \\
+			&\leq& \rho^t \vert\vert \pi - \pi^* \vert\vert_{\pi^*} + \sum_{l=0}^{t-1} \rho^{t-1-l} \vert\vert {\pi^*}^T \Delta \vert\vert_{\pi^*} \\
+		\end{eqnarray*}
+	
+	Now, note that we have
+		\begin{center}
+			$\rho = \lambda_{max} + \vert\vert \Delta \vert\vert_{\pi^*}$
+		\end{center}
+	where we have the following trivial bound:
+		\begin{center}
+			$\displaystyle \vert\vert \Delta \vert\vert_{\pi^*} \leq \sqrt{\frac{\pi_{max}^*}{\pi_{min}^*}} \vert\vert \Delta \vert\vert_2$
+		\end{center}
+	
+	Hence,
+		\begin{center}
+			$\displaystyle \vert\vert {\pi^*}^T \Delta \vert\vert_{\pi^*} \leq \vert\vert \pi^* \vert\vert_{\pi^*} \vert\vert \Delta \vert\vert_{\pi^*} \leq \sqrt{\frac{\pi_{max}^*}{\pi_{min}^*}} \cdot \vert\vert \Delta \vert\vert_2$.
+		\end{center}
+	
+	Therefore, so long as $\rho < 1$, we find:
+		\begin{center}
+			$\displaystyle \limsup_{t \rightarrow \infty} \frac{\vert\vert \pi_t - \pi^* \vert\vert_{\pi^*}}{\vert\vert \pi^* \vert\vert_{\pi^*}} \leq \frac{1}{1-\rho} \cdot \vert\vert {\pi^*}^T \Delta \vert\vert_{\pi^*} \leq \frac{1}{1-\rho} \sqrt{\frac{\pi_{max}^*}{\pi_{min}^*}} \cdot \vert\vert \Delta \vert\vert_2$.
+		\end{center}
+	
+	Now, it suffices to bound $\vert\vert \Delta \vert\vert_2$ and $\lambda_{max}$.
+	
+	For $\vert\vert \Delta \vert\vert_2$, we may write it as $\vert\vert D + \bar{\Delta} \vert\vert_2$ where $D$ is the max entry and $\bar{\Delta}$ is off-diagonal. Hence, analysis when $d_{max}$ is small can be done by a careful analysis whereas when $d_{max}$ is large it can be done by a concentration.
+	
+	
+	For $\lambda_{max}$, we need to look at a regularized Laplacian/regular random walk on a graph. Suppose the corresponding matrix is $Q$ where a stationary distribution $q^* \propto \frac{1}{\deg}$.
+	
+	Now, let
+		\begin{center}
+			$\displaystyle \alpha = \min_{(i, j) \in E} \frac{\pi_i^* P_{ij}}{q_i^* Q_{ij}}$ and $\displaystyle \beta = \max \frac{\pi_i^*}{q_i^*}$.
+		\end{center}
+	Then, by the {\bf Comparison Theorem}, we have:
+		\begin{center}
+			$\displaystyle \frac{1 - \lambda_{max}(P^*)}{1-\lambda_{max}(Q^*)} \geq \frac{\alpha}{\beta}$.
+		\end{center}
+	
+	From this analysis, we conclude that, if we do a random sampling, as long as $d \geq c \log n$,
+		\begin{center}
+			$\displaystyle \frac{\vert\vert \hat{\pi} - \pi^* \vert\vert_{\pi^*}}{\vert\vert \pi^* \vert\vert_{\pi^*}} \leq b^{5/2} \sqrt{\frac{\log n}{kd}}$.
+		\end{center}
+	
+	As a side note, we have the following result on the ranking error. Writing
+		\begin{center}
+			$\displaystyle D_w (\sigma) = \{ \frac{1}{2 n \vert\vert w \vert\vert^2} \sum_{i<j} (w_i -w_j)^2 {\bf 1} ((w_i - w_j)(\sigma_i^* - \sigma_j^*) < 0) \}^{1/2}$,
+		\end{center}
+	
+	we have:
+		\begin{center}
+			$\displaystyle D_w (\sigma_{\pi}) \leq \frac{\vert\vert w - \pi \vert\vert}{\vert\vert w \vert\vert}$
+		\end{center}
+	
+	Also, from information theory, we can find the following lower-bound:
+		\begin{center}
+			$\displaystyle \frac{\mathbb{E}[error]}{\vert\vert \pi^* \vert\vert} \geq \frac{1}{\sqrt{kd}}$.
+		\end{center}
+		
+	We also have the following heuristic:
+		\begin{center}
+			$\pi_t^T - {\pi^*}^T = \pi_{t-1}^T p - {\pi^*}^T = \pi_{t-1}^T p - \pi^* p^* = \pi_{t-1}^T p - \pi_{t-1}^T p^* + \pi_{t-1}^T p^* - \pi^* p^*$.
+		\end{center}
+	
+	From which, it is immediate that:
+		\begin{eqnarray*}
+			\vert\vert \pi_t - \pi^* \vert\vert &\leq& \vert\vert \pi_{t-1} \vert\vert \cdot \vert\vert p-p^* \vert\vert + \vert\vert p^* \vert\vert \cdot \vert\vert \pi_{t-1} - \pi^* \vert\vert \\
+			&\leq& \vert\vert \pi_{t-1} - \pi^* \vert\vert \cdot \vert\vert \Delta \vert\vert + \lambda \vert\vert \pi_{t-1} - \pi^* \vert\vert + \vert\vert \pi^* \vert\vert \cdot \vert\vert \Delta \vert\vert \\
+			&=& (\lambda + \vert\vert \Delta \vert\vert) \vert\vert \pi_{t-1} - \pi^* \vert\vert + \vert\vert \pi^* \vert\vert \cdot \vert\vert \Delta \vert\vert
+		\end{eqnarray*}
+	
+	Hence, in the limit, we find:
+		\begin{center}
+			$\displaystyle \vert\vert \pi - \pi^* \vert\vert \leq \frac{\vert\vert \pi^* \vert\vert \cdot \vert\vert \Delta \vert\vert}{1 - \lambda - \vert\vert \Delta \vert\vert}$.
+		\end{center}
+
+	For more details, please check the following reference~\cite{negahban2012iterative}.
+
+\section{First-order Marginals}
+	When $\mathbb{P}(\sigma) \propto \exp(\sum \theta_{ij} \sigma_{ij})$, we'd like to learn $\theta$ such taht $\mathbb{E}_{\theta} [\sigma] = \mathcal{M}$, where $\mathcal{M}$ is an observation. This can be done by {\bf Moment-Matching Algorithm}, prescribed by:
+		\begin{center}
+			$\displaystyle \theta^{t+1} - \theta^t = \mathcal{M} - \mathbb{E}_{\theta^t} [\sigma]$
+		\end{center}
 
 {
 \linespread{1.5}
